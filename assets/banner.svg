@@ -1,0 +1,90 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="340" viewBox="0 0 1280 340" fill="none" role="img" aria-label="Healthcare Knowledge Navigator">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1280" y2="340" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#0A1628"/>
+      <stop offset="1" stop-color="#070F1E"/>
+    </linearGradient>
+    <radialGradient id="glowTeal" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#00D4FF" stop-opacity="0.55"/>
+      <stop offset="1" stop-color="#00D4FF" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="glowViolet" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#7C3AED" stop-opacity="0.5"/>
+      <stop offset="1" stop-color="#7C3AED" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="glowCyan" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#22D3EE" stop-opacity="0.45"/>
+      <stop offset="1" stop-color="#22D3EE" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="title" x1="120" y1="120" x2="900" y2="220" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFFFFF"/>
+      <stop offset="0.6" stop-color="#CFefff"/>
+      <stop offset="1" stop-color="#00D4FF"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#00D4FF"/>
+      <stop offset="1" stop-color="#7C3AED"/>
+    </linearGradient>
+    <pattern id="grid" width="44" height="44" patternUnits="userSpaceOnUse">
+      <path d="M44 0H0V44" fill="none" stroke="#FFFFFF" stroke-opacity="0.05" stroke-width="1"/>
+    </pattern>
+    <radialGradient id="gridFade" cx="0.42" cy="0.4" r="0.62">
+      <stop offset="0" stop-color="#fff" stop-opacity="1"/>
+      <stop offset="1" stop-color="#fff" stop-opacity="0"/>
+    </radialGradient>
+    <mask id="gm"><rect width="1280" height="340" fill="url(#gridFade)"/></mask>
+    <filter id="soft"><feGaussianBlur stdDeviation="6"/></filter>
+  </defs>
+
+  <!-- base -->
+  <rect width="1280" height="340" rx="0" fill="url(#bg)"/>
+  <!-- glow blobs -->
+  <circle cx="170" cy="80" r="280" fill="url(#glowTeal)"/>
+  <circle cx="1120" cy="300" r="300" fill="url(#glowViolet)"/>
+  <circle cx="980" cy="40" r="220" fill="url(#glowCyan)"/>
+  <!-- grid -->
+  <rect width="1280" height="340" fill="url(#grid)" mask="url(#gm)"/>
+
+  <!-- badge pill -->
+  <g transform="translate(120,70)">
+    <rect x="0" y="0" width="300" height="30" rx="15" fill="#00D4FF" fill-opacity="0.10" stroke="#00D4FF" stroke-opacity="0.35"/>
+    <circle cx="18" cy="15" r="4" fill="#00D4FF"/>
+    <text x="34" y="20" font-family="'JetBrains Mono',ui-monospace,monospace" font-size="12" letter-spacing="2.5" fill="#7FE6FF">EVIDENCE-BASED · ZERO HALLUCINATION</text>
+  </g>
+
+  <!-- title -->
+  <text x="118" y="180" font-family="'Segoe UI',Inter,Arial,sans-serif" font-size="62" font-weight="800" letter-spacing="-1.5" fill="url(#title)">Healthcare Knowledge Navigator</text>
+
+  <!-- accent underline -->
+  <rect x="120" y="200" width="240" height="4" rx="2" fill="url(#accent)"/>
+
+  <!-- subtitle -->
+  <text x="120" y="244" font-family="'Segoe UI',Inter,Arial,sans-serif" font-size="21" font-weight="500" fill="#94A3B8">A clinical RAG assistant — grounded answers, ranked sources, real citations.</text>
+
+  <!-- source pills -->
+  <g font-family="'JetBrains Mono',ui-monospace,monospace" font-size="12.5" letter-spacing="2" fill="#33507A">
+    <text x="120" y="292">PUBMED</text>
+    <text x="210" y="292" fill="#22405f">·</text>
+    <text x="232" y="292">NICE</text>
+    <text x="300" y="292" fill="#22405f">·</text>
+    <text x="322" y="292">CDC</text>
+    <text x="382" y="292" fill="#22405f">·</text>
+    <text x="404" y="292">WHO</text>
+    <text x="470" y="292" fill="#22405f">·</text>
+    <text x="492" y="292">CLINICALTRIALS.GOV</text>
+  </g>
+
+  <!-- decorative pulse / vitals line on the right -->
+  <g transform="translate(0,0)" stroke="#00D4FF" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round" opacity="0.85">
+    <path d="M820 150 H905 l16 -46 22 92 18 -120 20 150 16 -56 H1170"/>
+  </g>
+  <g stroke="#7C3AED" stroke-width="2" fill="none" stroke-linecap="round" opacity="0.5">
+    <path d="M820 200 H905 l16 -30 22 60 18 -78 20 98 16 -36 H1170"/>
+  </g>
+  <!-- medical cross node -->
+  <g transform="translate(1095,150)">
+    <circle r="26" fill="#0A1628" stroke="#00D4FF" stroke-opacity="0.6"/>
+    <rect x="-4" y="-13" width="8" height="26" rx="3" fill="#00D4FF"/>
+    <rect x="-13" y="-4" width="26" height="8" rx="3" fill="#00D4FF"/>
+  </g>
+</svg>
