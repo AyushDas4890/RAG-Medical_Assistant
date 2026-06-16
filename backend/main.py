@@ -9,6 +9,14 @@ Two jobs:
 Run:  uvicorn main:app --reload     (from the backend/ folder)
 Open: http://127.0.0.1:8000
 """
+# --- Vercel/Serverless SQLite3 patch ---
+try:
+    __import__('pysqlite3')
+    import sys
+    sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
+except ImportError:
+    pass
+
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse, FileResponse
 from fastapi.middleware.cors import CORSMiddleware
