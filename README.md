@@ -254,13 +254,14 @@ python ingest.py
 
 This repo is Vercel-ready (includes the `pysqlite3-binary` patch ChromaDB needs on serverless).
 
+> 🔗 **Live deployment:** [https://rag-medical-assistant-five.vercel.app](https://rag-medical-assistant-five.vercel.app)
+
 1. Push to GitHub.
 2. Import the repo on [vercel.com](https://vercel.com/new).
-3. Add an environment variable: `OPENAI_API_KEY`.
-4. Deploy → copy your URL.
-5. **Paste that URL into this README** (the Live Demo button + the link line near the top).
+3. Add an environment variable: `OPENAI_API_KEY` in **Settings → Environment Variables**.
+4. Deploy — done!
 
-> ℹ️ Note: serverless filesystems are read-only, so build the Chroma index at deploy time or ship a prebuilt `chroma_store/` — see `WORKING_PLAN_v2.md` for the production data path.
+> ℹ️ Note: serverless filesystems are read-only, so the app copies the prebuilt `chroma_store/` to `/tmp` at startup. See `config.py` for details.
 
 ---
 
