@@ -29,7 +29,24 @@ HAS_KEY = OPENAI_API_KEY.startswith("sk-")
 
 # --- Paths ---
 DATA_DIR = BASE_DIR / "data"            # source documents (.md / .txt)
-CHROMA_DIR = BASE_DIR / "chroma_store"  # persistent vector store on disk
+
+# Read-only store packaged in lambda
+RO_CHROMA_DIR = BASE_DIR / "chroma_store"
+
+import shutil
+# Writable store in Vercel's ephemeral /tmp
+if os.getenv("VERCEL") == "1":
+    CHROMA_DIR = Path("/tmp/chroma_store")
+    # Copy pre-built store to /tmp if it hasn't been copied yet
+    if RO_CHROMA_DIR.exists() and not CHROMA_DIR.exists():
+        try:
+            shutil.copytree(str(RO_CHROMA_DIR), str(CHROMA_DIR))
+        except Exception as e:
+            # Fallback or log if copy fails
+            print(f"Error copying chroma_store to /tmp: {e}")
+else:
+    CHROMA_DIR = RO_CHROMA_DIR
+
 FRONTEND_DIR = BASE_DIR.parent / "frontend"
 
 # --- Retrieval / chunking ---
