@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Knowledge Graph · Healthcare Knowledge Navigator</title>
+<style>
+  :root{--bg:#070f1e;--panel:#0d1830;--line:#1e2c47;--text:#e8eef7;--muted:#8aa0bf;--teal:#00D4FF}
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%;font-family:'Segoe UI',Inter,system-ui,sans-serif;background:var(--bg);color:var(--text);overflow:hidden}
+  #wrap{display:flex;height:100vh}
+  canvas{display:block;cursor:grab;flex:1}
+  canvas.drag{cursor:grabbing}
+  header{position:fixed;top:0;left:0;right:0;padding:14px 20px;z-index:5;pointer-events:none;
+    display:flex;align-items:center;justify-content:space-between;
+    background:linear-gradient(#070f1eee,#070f1e00)}
+  header h1{font-size:16px;font-weight:700;letter-spacing:.2px}
+  header h1 b{color:var(--teal)}
+  header .sub{font-size:11px;color:var(--muted);font-family:ui-monospace,monospace}
+  .controls{position:fixed;top:54px;left:20px;z-index:6;display:flex;flex-direction:column;gap:10px;width:230px}
+  .search{pointer-events:auto;width:100%;padding:10px 13px;border-radius:10px;background:#0c1730;
+    border:1px solid var(--line);color:var(--text);outline:none;font-size:13px}
+  .search:focus{border-color:var(--teal)}
+  .legend{pointer-events:auto;background:#0b1426cc;border:1px solid var(--line);border-radius:12px;
+    padding:11px;backdrop-filter:blur(8px);display:flex;flex-direction:column;gap:7px}
+  .legend .lh{font-size:10px;letter-spacing:.14em;color:var(--muted);font-weight:600;margin-bottom:2px}
+  .leg{display:flex;align-items:center;gap:8px;font-size:12.5px;cursor:pointer;user-select:none;
+    padding:3px 5px;border-radius:7px;transition:.15s;text-transform:capitalize}
+  .leg:hover{background:#ffffff0c}
+  .leg.off{opacity:.32}
+  .leg .sw{width:11px;height:11px;border-radius:3px;flex:none}
+  .btns{display:flex;gap:8px}
+  .btn{pointer-events:auto;flex:1;padding:8px;border-radius:9px;background:#0c1730;border:1px solid var(--line);
+    color:var(--text);font-size:12px;cursor:pointer;transition:.15s}
+  .btn:hover{border-color:var(--teal);background:#0f1f3a}
+  /* detail panel */
+  #detail{position:fixed;top:0;right:0;height:100vh;width:340px;background:var(--panel);
+    border-left:1px solid var(--line);transform:translateX(100%);transition:transform .35s cubic-bezier(.2,.9,.25,1.1);
+    z-index:8;padding:24px 22px;overflow-y:auto;box-shadow:-20px 0 60px -20px #000}
+  #detail.open{transform:none}
+  #detail .x{position:absolute;top:14px;right:14px;width:30px;height:30px;border-radius:8px;background:#ffffff0a;
+    border:1px solid var(--line);color:var(--text);cursor:pointer;font-size:13px}
+  #detail .cat{display:inline-block;font-size:10.5px;letter-spacing:.12em;font-weight:700;
+    padding:4px 9px;border-radius:7px;text-transform:uppercase;margin-bottom:12px}
+  #detail h2{font-size:19px;margin-bottom:10px;padding-right:24px}
+  #detail p.d{font-size:13.5px;line-height:1.6;color:#cbd6e6;margin-bottom:18px}
+  #detail .clab{font-size:10.5px;letter-spacing:.12em;color:var(--muted);font-weight:600;margin:14px 0 7px}
+  #detail .conn{display:flex;align-items:center;gap:8px;font-size:13px;padding:7px 9px;border-radius:8px;
+    background:#0a1426;border:1px solid var(--line);margin-bottom:6px;cursor:pointer;transition:.15s}
+  #detail .conn:hover{border-color:var(--teal)}
+  #detail .conn .rel{font-size:10.5px;color:var(--muted);font-family:ui-monospace,monospace;margin-left:auto}
+  #detail .dot{width:9px;height:9px;border-radius:50%;flex:none}
+  .hint{position:fixed;bottom:14px;left:50%;transform:translateX(-50%);z-index:6;font-size:11.5px;
+    color:var(--muted);background:#0b1426cc;border:1px solid var(--line);padding:7px 14px;border-radius:999px;backdrop-filter:blur(8px)}
+</style>
+</head>
+<body>
+<header>
+  <div><h1>🧠 <b>Knowledge Graph</b> · Healthcare Knowledge Navigator</h1>
+    <div class="sub">click a node for detail · drag to rearrange · scroll to zoom</div></div>
+  <div class="sub" id="counts"></div>
+</header>
+
+<div class="controls">
+  <input class="search" id="search" placeholder="🔍 Search nodes…" />
+  <div class="legend" id="legend"><div class="lh">CATEGORIES — click to toggle</div></div>
+  <div class="btns">
+    <button class="btn" id="reset">⤢ Fit view</button>
+    <button class="btn" id="freeze">⏸ Freeze</button>
+  </div>
+</div>
+
+<div id="wrap"><canvas id="cv"></canvas></div>
+
+<aside id="detail">
+  <button class="x" id="dx">✕</button>
+  <span class="cat" id="dcat"></span>
+  <h2 id="dtitle"></h2>
+  <p class="d" id="ddesc"></p>
+  <div id="dconns"></div>
+</aside>
+
+<div class="hint">Standalone map — open this file anytime to reload the whole project's context.</div>
+
+<script>
+/* ===== graph data (mirror of .project/knowledge-graph.json) ===== */
+const GRAPH = {
+ categories:{frontend:"#00D4FF",backend:"#10B981",endpoint:"#F59E0B",store:"#7C3AED",
+   external:"#EF4444",concept:"#22D3EE",data:"#FB923C",deploy:"#94A3B8",doc:"#64748B"},
+ nodes:[
+  {id:"ui_index",label:"index.html",category:"frontend",detail:"Landing (hero, search, quick-starts, 'Specialised in' topics, marquee) + app shell (topbar, chat, evidence panel) + citation modal + custom cursor. Served at the same origin as the API."},
+  {id:"ui_css",label:"style.css",category:"frontend",detail:"Design system (navy/teal tokens), aurora mesh background, glassmorphism, motion (cursor, 3D tilt, scroll reveals, shimmer, marquee). Full prefers-reduced-motion fallback."},
+  {id:"ui_js",label:"app.js",category:"frontend",detail:"All frontend logic: health polling + status dot, /api/chat call with real-error display, evidence panel + confidence meter, citation modal, auto topics (loadTopics), and the motion layer."},
+  {id:"be_main",label:"main.py",category:"backend",detail:"FastAPI app. Serves frontend via StaticFiles + routes /api/health, /api/topics, /api/chat. Permissive CORS backup. Catches errors -> readable JSON. pysqlite3 shim + sys.path insert for serverless."},
+  {id:"be_rag",label:"rag.py",category:"backend",detail:"RAG core: get_openai, get_collection (Chroma, embedding_function=None), embed_texts, chunk_text, retrieve, list_topics, confidence_from, answer_question (always returns a dict)."},
+  {id:"be_ingest",label:"ingest.py",category:"backend",detail:"Reads data/*.md (+ front matter), chunks, embeds via OpenAI, writes ChromaDB. Rebuilds the collection each run. Run after any data change."},
+  {id:"be_config",label:"config.py",category:"backend",detail:"Reads .env; exposes OPENAI_API_KEY, models, paths, chunk sizes, HAS_KEY. Never raises if the key is missing."},
+  {id:"ep_health",label:"/api/health",category:"endpoint",detail:"Returns {ok, has_key, num_chunks, chat_model}. Drives the status dot in the UI."},
+  {id:"ep_topics",label:"/api/topics",category:"endpoint",detail:"Returns distinct indexed documents -> powers the auto 'Specialised in' list. Calls rag.list_topics()."},
+  {id:"ep_chat",label:"/api/chat",category:"endpoint",detail:"POST {question} -> rag.answer_question(). Returns answer + ranked sources + confidence, or a readable error."},
+  {id:"chroma",label:"ChromaDB",category:"store",detail:"Local persistent vector store (backend/chroma_store/). Cosine space. We supply embeddings ourselves (no auto-download)."},
+  {id:"oa_embed",label:"OpenAI embeddings",category:"external",detail:"text-embedding-3-small. Used at ingest time and per query. Paid API."},
+  {id:"oa_chat",label:"OpenAI gpt-4o-mini",category:"external",detail:"Chat model that writes the grounded, cited answer at temperature 0.1."},
+  {id:"data",label:"data/*.md",category:"data",detail:"Sourced clinical guideline snippets with front matter (source, title, year, evidence_level, url). Currently: T2DM, hypertension, AF, headache."},
+  {id:"c_rag",label:"RAG pipeline",category:"concept",detail:"Retrieve top-k chunks -> build grounded prompt -> LLM answer with [n] citations. Core value loop."},
+  {id:"c_cite",label:"Citations",category:"concept",detail:"LLM appends [n] markers; frontend maps them to clickable chips -> source modal with snippet + copy citation."},
+  {id:"c_conf",label:"Confidence",category:"concept",detail:"MVP signal from retrieval similarity (top + avg). Colors: HIGH/MEDIUM/LOW/INSUFFICIENT. Phase 2 -> NLI."},
+  {id:"c_sameorigin",label:"Same-origin fix",category:"concept",detail:"THE key decision. FastAPI serves the page; frontend uses relative /api paths. Eliminates CORS 'unable to fetch'."},
+  {id:"c_motion",label:"Motion UI",category:"concept",detail:"Magnetic custom cursor, 3D tilt cards, parallax mesh, kinetic marquee, staggered scroll reveals, glassmorphism. Vanilla, no build."},
+  {id:"c_topics",label:"Auto topic discovery",category:"concept",detail:"Site reads its own index metadata and shows exactly what it can answer. Updates itself on re-ingest."},
+  {id:"deploy_vercel",label:"Vercel",category:"deploy",detail:"Serverless host. Needs pysqlite3-binary shim for Chroma's sqlite. Read-only FS -> ship/build index at deploy time. Live: rag-medical-assistant-five.vercel.app"},
+  {id:"doc_context",label:"PROJECT_CONTEXT.md",category:"doc",detail:"The future-session brain: architecture, file map, decisions, gotchas, re-onboarding checklist."},
+  {id:"doc_plan",label:"WORKING_PLAN_v2.md",category:"doc",detail:"Lean MVP-first plan + what was cut from the original (Milvus, UMLS, rerank, NLI, Next.js)."},
+  {id:"doc_readme",label:"README.md",category:"doc",detail:"Public GitHub readme: banner, badges, Mermaid diagram, quick start, Vercel deploy, live demo link."}
+ ],
+ edges:[
+  {from:"be_main",to:"ui_index",label:"serves"},{from:"ui_index",to:"ui_css",label:"loads"},
+  {from:"ui_index",to:"ui_js",label:"loads"},{from:"be_main",to:"ep_health",label:"route"},
+  {from:"be_main",to:"ep_topics",label:"route"},{from:"be_main",to:"ep_chat",label:"route"},
+  {from:"ui_js",to:"ep_health",label:"fetch"},{from:"ui_js",to:"ep_topics",label:"fetch"},
+  {from:"ui_js",to:"ep_chat",label:"fetch"},{from:"ep_chat",to:"be_rag",label:"answer_question"},
+  {from:"ep_topics",to:"be_rag",label:"list_topics"},{from:"ep_health",to:"be_rag",label:"count_chunks"},
+  {from:"be_rag",to:"chroma",label:"query"},{from:"be_rag",to:"oa_embed",label:"embed"},
+  {from:"be_rag",to:"oa_chat",label:"complete"},{from:"be_rag",to:"be_config",label:"reads"},
+  {from:"be_main",to:"be_config",label:"imports"},{from:"be_main",to:"be_rag",label:"imports"},
+  {from:"be_ingest",to:"data",label:"reads"},{from:"be_ingest",to:"oa_embed",label:"embed"},
+  {from:"be_ingest",to:"chroma",label:"builds"},{from:"be_ingest",to:"be_config",label:"reads"},
+  {from:"chroma",to:"data",label:"indexes"},{from:"ep_chat",to:"c_rag",label:"implements"},
+  {from:"be_rag",to:"c_cite",label:"produces"},{from:"be_rag",to:"c_conf",label:"computes"},
+  {from:"ep_topics",to:"c_topics",label:"powers"},{from:"ui_js",to:"c_topics",label:"renders"},
+  {from:"ui_js",to:"c_motion",label:"implements"},{from:"ui_js",to:"c_cite",label:"renders"},
+  {from:"be_main",to:"c_sameorigin",label:"enforces"},{from:"ui_js",to:"c_sameorigin",label:"relative paths"},
+  {from:"deploy_vercel",to:"be_main",label:"hosts"},{from:"doc_context",to:"c_rag",label:"documents"},
+  {from:"doc_context",to:"c_sameorigin",label:"documents"}
+ ]
+};
+
+/* ===== setup ===== */
+const cv=document.getElementById("cv"), ctx=cv.getContext("2d");
+const byId={}; GRAPH.nodes.forEach(n=>byId[n.id]=n);
+const adj={}; GRAPH.nodes.forEach(n=>adj[n.id]=[]);
+GRAPH.edges.forEach(e=>{adj[e.from].push({id:e.to,label:e.label,dir:"out"});adj[e.to].push({id:e.from,label:e.label,dir:"in"});});
+const hidden={}; // category -> bool
+let W,H,DPR;
+function resize(){DPR=devicePixelRatio||1;W=cv.clientWidth;H=cv.clientHeight;cv.width=W*DPR;cv.height=H*DPR;ctx.setTransform(DPR,0,0,DPR,0,0);}
+addEventListener("resize",resize);
+
+/* init positions in a circle */
+GRAPH.nodes.forEach((n,i)=>{const a=i/GRAPH.nodes.length*Math.PI*2;n.x=innerWidth/2+Math.cos(a)*240;n.y=innerHeight/2+Math.sin(a)*200;n.vx=0;n.vy=0;});
+resize();
+
+/* view transform */
+let view={x:0,y:0,k:1};
+let frozen=false, selected=null, hoverId=null;
+
+/* ===== physics ===== */
+function step(){
+  if(frozen) return;
+  const nodes=GRAPH.nodes.filter(n=>!hidden[n.category]);
+  // repulsion
+  for(let i=0;i<nodes.length;i++)for(let j=i+1;j<nodes.length;j++){
+    const a=nodes[i],b=nodes[j];let dx=a.x-b.x,dy=a.y-b.y,d2=dx*dx+dy*dy||0.01;
+    const f=2600/d2;const d=Math.sqrt(d2);dx/=d;dy/=d;
+    a.vx+=dx*f;a.vy+=dy*f;b.vx-=dx*f;b.vy-=dy*f;
+  }
+  // springs
+  GRAPH.edges.forEach(e=>{const a=byId[e.from],b=byId[e.to];if(hidden[a.category]||hidden[b.category])return;
+    let dx=b.x-a.x,dy=b.y-a.y,d=Math.sqrt(dx*dx+dy*dy)||0.01;const f=(d-150)*0.015;dx/=d;dy/=d;
+    a.vx+=dx*f;a.vy+=dy*f;b.vx-=dx*f;b.vy-=dy*f;});
+  // centering + integrate
+  const cx=W/2,cy=H/2;
+  nodes.forEach(n=>{n.vx+=(cx-n.x)*0.0012;n.vy+=(cy-n.y)*0.0012;
+    if(n===dragNode)return;n.vx*=0.86;n.vy*=0.86;n.x+=n.vx;n.y+=n.vy;});
+}
+
+/* ===== draw ===== */
+function draw(){
+  ctx.clearRect(0,0,W,H);
+  ctx.save();ctx.translate(view.x,view.y);ctx.scale(view.k,view.k);
+  const neighbors=new Set();
+  if(hoverId||selected){const id=hoverId||selected;neighbors.add(id);adj[id].forEach(a=>neighbors.add(a.id));}
+  // edges
+  GRAPH.edges.forEach(e=>{const a=byId[e.from],b=byId[e.to];if(hidden[a.category]||hidden[b.category])return;
+    const hl=neighbors.size&&neighbors.has(e.from)&&neighbors.has(e.to);
+    ctx.strokeStyle=hl?"#00D4FFcc":(neighbors.size?"#162033":"#26365a");
+    ctx.lineWidth=hl?2:1;ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke();
+    if(hl){const mx=(a.x+b.x)/2,my=(a.y+b.y)/2;ctx.fillStyle="#9fd9ff";ctx.font="9px ui-monospace,monospace";
+      ctx.textAlign="center";ctx.fillText(e.label,mx,my-3);}
+  });
+  // nodes
+  GRAPH.nodes.forEach(n=>{if(hidden[n.category])return;
+    const col=GRAPH.categories[n.category];
+    const dim=neighbors.size&&!neighbors.has(n.id);
+    const r=(n.id===selected?12:9);
+    ctx.globalAlpha=dim?0.25:1;
+    ctx.beginPath();ctx.arc(n.x,n.y,r+5,0,7);ctx.fillStyle=col+"22";ctx.fill();
+    ctx.beginPath();ctx.arc(n.x,n.y,r,0,7);ctx.fillStyle=col;ctx.fill();
+    ctx.lineWidth=2;ctx.strokeStyle=(n.id===selected||n.id===hoverId)?"#fff":"#0a1426";ctx.stroke();
+    ctx.globalAlpha=dim?0.3:1;
+    ctx.fillStyle="#dce7f5";ctx.font="600 11px 'Segoe UI',sans-serif";ctx.textAlign="center";
+    ctx.fillText(n.label,n.x,n.y+r+12);
+  });
+  ctx.globalAlpha=1;ctx.restore();
+}
+function loop(){step();draw();requestAnimationFrame(loop);}
+
+/* ===== interaction ===== */
+function toWorld(px,py){return{x:(px-view.x)/view.k,y:(py-view.y)/view.k};}
+function pick(px,py){const w=toWorld(px,py);let best=null,bd=18;
+  GRAPH.nodes.forEach(n=>{if(hidden[n.category])return;const d=Math.hypot(n.x-w.x,n.y-w.y);if(d<bd){bd=d;best=n;}});return best;}
+let dragNode=null,dragging=false,panStart=null;
+cv.addEventListener("mousedown",e=>{const n=pick(e.offsetX,e.offsetY);
+  if(n){dragNode=n;cv.classList.add("drag");}else{panStart={x:e.offsetX-view.x,y:e.offsetY-view.y};dragging=true;}});
+cv.addEventListener("mousemove",e=>{
+  if(dragNode){const w=toWorld(e.offsetX,e.offsetY);dragNode.x=w.x;dragNode.y=w.y;dragNode.vx=0;dragNode.vy=0;}
+  else if(dragging){view.x=e.offsetX-panStart.x;view.y=e.offsetY-panStart.y;}
+  else{const n=pick(e.offsetX,e.offsetY);hoverId=n?n.id:null;cv.style.cursor=n?"pointer":"grab";}
+});
+addEventListener("mouseup",()=>{dragNode=null;dragging=false;cv.classList.remove("drag");});
+cv.addEventListener("click",e=>{const n=pick(e.offsetX,e.offsetY);if(n)openDetail(n.id);});
+cv.addEventListener("wheel",e=>{e.preventDefault();const f=e.deltaY<0?1.1:0.9;
+  const wx=(e.offsetX-view.x)/view.k,wy=(e.offsetY-view.y)/view.k;view.k=Math.max(.3,Math.min(2.5,view.k*f));
+  view.x=e.offsetX-wx*view.k;view.y=e.offsetY-wy*view.k;},{passive:false});
+
+/* detail panel */
+function openDetail(id){selected=id;const n=byId[id];const col=GRAPH.categories[n.category];
+  document.getElementById("dcat").textContent=n.category;
+  document.getElementById("dcat").style.cssText=`background:${col}22;color:${col}`;
+  document.getElementById("dtitle").textContent=n.label;
+  document.getElementById("ddesc").textContent=n.detail;
+  const cs=document.getElementById("dconns");
+  const seen={};const items=adj[id].filter(a=>{if(seen[a.id+a.label])return false;seen[a.id+a.label]=1;return true;});
+  cs.innerHTML=`<div class="clab">CONNECTIONS (${items.length})</div>`+items.map(a=>{
+    const m=byId[a.id];const c=GRAPH.categories[m.category];
+    return `<div class="conn" data-id="${a.id}"><span class="dot" style="background:${c}"></span>${m.label}
+      <span class="rel">${a.dir==="out"?"→":"←"} ${a.label}</span></div>`;}).join("");
+  cs.querySelectorAll(".conn").forEach(el=>el.onclick=()=>openDetail(el.dataset.id));
+  document.getElementById("detail").classList.add("open");
+}
+document.getElementById("dx").onclick=()=>{document.getElementById("detail").classList.remove("open");selected=null;};
+
+/* legend */
+const leg=document.getElementById("legend");
+Object.entries(GRAPH.categories).forEach(([cat,col])=>{
+  const count=GRAPH.nodes.filter(n=>n.category===cat).length;
+  const d=document.createElement("div");d.className="leg";d.innerHTML=`<span class="sw" style="background:${col}"></span>${cat} <span style="margin-left:auto;color:var(--muted);font-size:11px">${count}</span>`;
+  d.onclick=()=>{hidden[cat]=!hidden[cat];d.classList.toggle("off",hidden[cat]);};
+  leg.appendChild(d);
+});
+
+/* search */
+document.getElementById("search").addEventListener("input",e=>{
+  const q=e.target.value.toLowerCase().trim();if(!q){hoverId=null;return;}
+  const hit=GRAPH.nodes.find(n=>n.label.toLowerCase().includes(q)||n.id.includes(q));
+  if(hit){hoverId=hit.id;view.k=1.1;view.x=W/2-hit.x*view.k;view.y=H/2-hit.y*view.k;}
+});
+
+/* buttons */
+document.getElementById("reset").onclick=()=>{view={x:0,y:0,k:1};};
+const fb=document.getElementById("freeze");
+fb.onclick=()=>{frozen=!frozen;fb.textContent=frozen?"▶ Resume":"⏸ Freeze";};
+
+document.getElementById("counts").textContent=`${GRAPH.nodes.length} nodes · ${GRAPH.edges.length} edges`;
+loop();
+</script>
+</body>
+</html>
