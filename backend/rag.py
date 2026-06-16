@@ -8,6 +8,8 @@ Design choices that keep this reliable for a beginner:
 - Every OpenAI call is wrapped so failures return a clear Python exception
   with a readable message instead of a raw stack trace to the browser.
 """
+from __future__ import annotations
+
 # --- Vercel/Serverless SQLite3 patch ---
 try:
     __import__('pysqlite3')
@@ -15,8 +17,6 @@ try:
     sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
 except ImportError:
     pass
-
-from __future__ import annotations
 
 import re
 from typing import List, Dict, Any
