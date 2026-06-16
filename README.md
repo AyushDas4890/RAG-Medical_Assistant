@@ -284,7 +284,7 @@ The bundled `data/` snippets are short, illustrative summaries for demonstrating
 ---
 
 <p align="center">
-  <sub>Built with ☕ and a lot of <code>print()</code> by <b>AYuSh</b> · Thāne, Maharashtra 🇮🇳</sub><br/>
+  <sub>Built with ☕ and a lot of <code>print()</code> by <b>AYuSh</b> · Phagwara, Punjab 🇮🇳</sub><br/>
   <sub>⭐ Star this repo if the citation-grounded approach helped you.</sub>
 </p>
 
