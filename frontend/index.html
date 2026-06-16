@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Healthcare Knowledge Navigator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <!-- custom cursor (desktop only) -->
+  <div class="cursor-ring" id="cursorRing"></div>
+  <div class="cursor-dot" id="cursorDot"></div>
+
+  <!-- animated mesh / aurora background (parallax to mouse) -->
+  <div class="aurora" id="aurora">
+    <span class="blob b1" data-depth="0.05"></span>
+    <span class="blob b2" data-depth="0.09"></span>
+    <span class="blob b3" data-depth="0.07"></span>
+    <span class="blob b4" data-depth="0.04"></span>
+    <div class="grid-overlay"></div>
+    <div class="noise"></div>
+  </div>
+
+  <!-- ============ LANDING ============ -->
+  <section id="landing" class="landing">
+    <div class="brand-badge" data-reveal>
+      <span class="pulse-dot"></span> EVIDENCE-BASED · ZERO HALLUCINATION
+    </div>
+    <h1 class="hero-title" data-reveal>
+      <span class="hero-icon">🏥</span>
+      Healthcare Knowledge<br /><span class="grad">Navigator</span>
+    </h1>
+    <p class="hero-sub" data-reveal>
+      A clinical RAG assistant. Ask a question — get a grounded answer with
+      ranked sources, citations, and a confidence signal.
+    </p>
+
+    <form id="landingForm" class="hero-search" data-reveal>
+      <input id="landingInput" type="text" autocomplete="off"
+             placeholder="Ask a clinical question…" />
+      <button type="submit" aria-label="Search" data-magnetic>→</button>
+    </form>
+
+    <div class="quickstarts" id="quickstarts" data-reveal>
+      <button data-magnetic data-q="What is first-line treatment for type 2 diabetes with CKD?">💊 T2DM + CKD</button>
+      <button data-magnetic data-q="Which anticoagulant is first-line for atrial fibrillation?">🧬 AF anticoagulation</button>
+      <button data-magnetic data-q="How is stage 1 hypertension diagnosed and when do you treat it?">📋 Hypertension</button>
+      <button data-magnetic data-q="When should metformin be stopped in kidney disease?">⚠️ Metformin + eGFR</button>
+    </div>
+
+    <div class="topics-wrap" id="topicsWrap" data-reveal hidden>
+      <div class="topics-label"><span class="tline"></span> SPECIALISED IN <span class="tline"></span></div>
+      <div class="topics" id="topics"></div>
+      <div class="topics-hint" id="topicsHint"></div>
+    </div>
+
+    <div class="sources-line" data-reveal>
+      <span class="status"><i id="dotLanding" class="dot dot-grey"></i><span id="statusLanding">checking server…</span></span>
+    </div>
+
+    <!-- kinetic marquee -->
+    <div class="marquee" aria-hidden="true">
+      <div class="marquee-track" id="marqueeTrack">
+        <span>PUBMED</span><span class="o">NICE</span><span>CDC</span><span class="o">WHO</span>
+        <span>CLINICALTRIALS.GOV</span><span class="o">EVIDENCE-BASED</span><span>ZERO HALLUCINATION</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ APP ============ -->
+  <main id="app" class="app hidden">
+    <header class="topbar">
+      <div class="logo" id="homeBtn" data-magnetic>🏥 <b>MedNav</b> AI</div>
+      <div class="topbar-right">
+        <span class="status small"><i id="dot" class="dot dot-grey"></i><span id="status">…</span></span>
+        <button id="evidenceToggle" class="ghost-btn" data-magnetic title="Toggle evidence (Ctrl+/)">📚 Evidence</button>
+      </div>
+    </header>
+
+    <div class="workspace">
+      <section class="chat-col">
+        <div id="messages" class="messages"></div>
+        <form id="chatForm" class="composer">
+          <input id="chatInput" type="text" autocomplete="off"
+                 placeholder="Search medical literature…" />
+          <button type="submit" id="sendBtn" data-magnetic>Ask</button>
+        </form>
+      </section>
+
+      <aside class="evidence" id="evidence">
+        <div class="evidence-head">📚 Evidence</div>
+        <div class="conf-wrap" id="confWrap" style="display:none">
+          <div class="conf-label">CONFIDENCE</div>
+          <div class="conf-track"><div class="conf-fill" id="confFill"></div></div>
+          <div class="conf-badge" id="confBadge">—</div>
+        </div>
+        <div id="sources" class="sources"></div>
+        <div id="evidenceEmpty" class="evidence-empty">
+          Sources for each answer appear here — ranked, scored, and citable.
+        </div>
+      </aside>
+    </div>
+  </main>
+
+  <!-- citation modal -->
+  <div id="modal" class="modal hidden">
+    <div class="modal-card glass">
+      <button class="modal-x" id="modalX" data-magnetic>✕</button>
+      <div id="modalBody"></div>
+    </div>
+  </div>
+
+  <script src="/app.js"></script>
+</body>
+</html>

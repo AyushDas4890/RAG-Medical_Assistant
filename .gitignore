@@ -1,0 +1,28 @@
+# Virtual environment
+.venv/
+venv/
+ENV/
+env/
+
+# Environment variables
+.env
+backend/.env
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Database / Vector store cache
+backend/chroma_store/
+chroma_store/
+
+# IDE files
+.vscode/
+.idea/
+.gemini/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.swp
